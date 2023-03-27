@@ -4,12 +4,12 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 
 public class CS1003P4 {
+    private ArrayList<String> output = new ArrayList<>();
     public static void main(String[] args) {
         if (args.length != 3) {
             throw new IllegalArgumentException("Wrong number of command line arguments!");
@@ -38,30 +38,31 @@ public class CS1003P4 {
         SparkConf conf = new SparkConf().setAppName("SparkPractical").setMaster("local[*]");
         JavaSparkContext sc = new JavaSparkContext(conf);
         sc.setLogLevel("ERROR");
-        //for (String file : files) {
-            JavaPairRDD<String, String> wholeText = sc.wholeTextFiles(directory + "/" + files[0]);
+        for (String file : files) {
+            JavaPairRDD<String, String> wholeText = sc.wholeTextFiles(directory + "/" + file);
             JavaRDD<String> lines = wholeText.flatMap(line -> Arrays.asList(line._2().replaceAll("[^a-zA-z0-9]+", " ").toLowerCase().split("[ \t\n\r]")).iterator());
-            List<String> line = lines.collect();
-            System.out.println(line);
-            //String line = wholeText.take(2).toString();
-            //String[] words = splitWords(line);
-            //System.out.println(Arrays.toString(words));
-            //generateSplits(searchTerm, words);
-        //}
+            generateSplits(cleanText(searchTerm), lines.collect().toArray(new String[0]), similarity);
+        }
+        printResults();
     }
 
-    public String[] splitWords(String line) {
-        //line = line.substring(line.indexOf(".txt") + 6);
-        line = line.replaceAll("[^a-zA-Z0-9]", " ");
+    public String cleanText(String line) {
+        line = line.replaceAll("[^a-zA-Z0-9]+", " ");
         line = line.toLowerCase();
-        return line.split("[ \t\n\r]");
+        return line;
     }
 
-    public void generateSplits(String search, String[] words) {
+    public void generateSplits(String search, String[] words, double similarity) {
         int length = search.split(" ").length;
-        for (int i = 0; i < words.length - 3; i++) {
-            String substring = words[i] + " " + words[i + 1] + " " + words[i + 2];
-            System.out.println(substring);
+        for (int i = 0; i < words.length - length; i++) {
+            String substring = words[i];
+            for (int j = 1; j < length; j++) {
+                substring += " " + words[i + j];
+            }
+            double next = calculateJaccard(createBigram(search), createBigram(substring));
+            if (next >= similarity) {
+                this.output.add(substring);
+            }
         }
     }
 
@@ -89,5 +90,11 @@ public class CS1003P4 {
         set1.addAll(set2);
         union.addAll(set1);
         return (double) intersection.size() / union.size();
+    }
+
+    public void printResults() {
+        for (String response : this.output) {
+            System.out.println(response);
+        }
     }
 }
