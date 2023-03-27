@@ -1,5 +1,6 @@
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 
 import java.io.File;
@@ -36,6 +37,7 @@ public class CS1003P4 {
         SparkConf conf = new SparkConf().setAppName("SparkPractical").setMaster("local[*]");
         JavaSparkContext sc = new JavaSparkContext(conf);
         sc.setLogLevel("ERROR");
+        HashSet<String> search = createBigram(searchTerm);
         for (String file : files) {
             JavaPairRDD<String, String> wholeText = sc.wholeTextFiles(directory + "/" + file);
             String line = wholeText.take(1).toString();
