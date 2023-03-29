@@ -2,6 +2,11 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.mllib.rdd.RDDFunctions;
+import org.apache.spark.mllib.rdd.SlidingRDD;
+import org.apache.spark.rdd.RDD;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -9,7 +14,21 @@ import java.util.Arrays;
 import java.util.HashSet;
 
 public class CS1003P4 {
+    /**
+     * output is an ArrayList of Strings where all matched phrases will be stored. At the end of this
+     * program a simple for loop cycles through this list and prints out all the correct responses.
+     */
     private ArrayList<String> output = new ArrayList<>();
+
+    /**
+     * This main method is the starting point for this program. It begins by looking at the command line
+     * arguments. Firstly these arguments are checked to see if a total of three exist. An error is produced
+     * if not. After that, the directory provided by the user is validated. Should the directory of
+     * text files not exist, an error message is produced. The last check is to see if the directory provided
+     * actually contains any files. Should it not, the proper error is produced. Finally, a new CS1003P4 object
+     * is created and the search method is called from the object using the provided command line arguments.
+     * @param args - the command line arguments. An array of string which contain the user's requests
+     */
     public static void main(String[] args) {
         if (args.length != 3) {
             throw new IllegalArgumentException("Wrong number of command line arguments!");
@@ -19,6 +38,9 @@ public class CS1003P4 {
             if (!directory.exists()) {
                 throw new FileNotFoundException("Directory \"" + args[0] + "\" does not exist!");
             }
+            if (directory.list() == null || directory.list().length == 0) {
+                throw new FileNotFoundException("\"" + directory + "\" does not contain any files!");
+            }
             CS1003P4 project = new CS1003P4();
             project.search(directory.getPath(), args[1], Double.parseDouble(args[2]));
         } catch (IllegalArgumentException | FileNotFoundException e) {
@@ -26,23 +48,22 @@ public class CS1003P4 {
         }
     }
 
+    /**
+     * search is the starting method which begins the process by adding all the text file names from the provided
+     * directory into an array. Then the proper Spark configurations are created. First a SparkConf is made and then
+     * a JavaSparkContext is created using the SparkConf. A for loop
+     * @param directory
+     * @param searchTerm
+     * @param similarity
+     */
     public void search(String directory, String searchTerm, double similarity) {
         String[] files = new File(directory).list();
-        try {
-            if (files == null || files.length == 0) {
-                throw new FileNotFoundException("\"" + directory + "\" does not contain any files!");
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
         SparkConf conf = new SparkConf().setAppName("SparkPractical").setMaster("local[*]");
         JavaSparkContext sc = new JavaSparkContext(conf);
         sc.setLogLevel("ERROR");
-        for (String file : files) {
-            JavaPairRDD<String, String> wholeText = sc.wholeTextFiles(directory + "/" + file);
-            JavaRDD<String> lines = wholeText.flatMap(line -> Arrays.asList(line._2().replaceAll("[^a-zA-z0-9]+", " ").toLowerCase().split("[ \t\n\r]")).iterator());
-            generateSplits(cleanText(searchTerm), lines.collect().toArray(new String[0]), similarity);
-        }
+        JavaPairRDD<String, String> wholeText = sc.wholeTextFiles(directory);
+        JavaRDD<String> lines = wholeText.flatMap(line -> Arrays.asList(line._2().replaceAll("[^a-zA-z0-9]+", " ").toLowerCase().split("[ \t\n\r]")).iterator());
+        generateSplits(cleanText(searchTerm), lines.collect().toArray(new String[0]), similarity);
         printResults();
     }
 
