@@ -1,8 +1,9 @@
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -54,8 +55,8 @@ public class CS1003P4 {
      */
     public void search(String directory, String searchTerm, double similarity) {
         SparkConf conf = new SparkConf().setAppName("SparkPractical").setMaster("local[*]");
+        Logger.getRootLogger().setLevel(Level.OFF);
         JavaSparkContext sc = new JavaSparkContext(conf);
-        sc.setLogLevel("ERROR");
         JavaRDD<String> values = sc.wholeTextFiles(directory).values();
         values.foreach(x -> cleanText(x));
         System.out.println(values.take(0));
