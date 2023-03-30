@@ -2,10 +2,6 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.mllib.rdd.RDDFunctions;
-import org.apache.spark.mllib.rdd.SlidingRDD;
-import org.apache.spark.rdd.RDD;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -57,7 +53,6 @@ public class CS1003P4 {
      * @param similarity
      */
     public void search(String directory, String searchTerm, double similarity) {
-        String[] files = new File(directory).list();
         SparkConf conf = new SparkConf().setAppName("SparkPractical").setMaster("local[*]");
         JavaSparkContext sc = new JavaSparkContext(conf);
         sc.setLogLevel("ERROR");
