@@ -56,10 +56,13 @@ public class CS1003P4 {
         SparkConf conf = new SparkConf().setAppName("SparkPractical").setMaster("local[*]");
         JavaSparkContext sc = new JavaSparkContext(conf);
         sc.setLogLevel("ERROR");
-        JavaPairRDD<String, String> wholeText = sc.wholeTextFiles(directory);
-        JavaRDD<String> lines = wholeText.flatMap(line -> Arrays.asList(line._2().replaceAll("[^a-zA-z0-9]+", " ").toLowerCase().split("[ \t\n\r]")).iterator());
-        generateSplits(cleanText(searchTerm), lines.collect().toArray(new String[0]), similarity);
-        printResults();
+        JavaRDD<String> values = sc.wholeTextFiles(directory).values();
+        values.foreach(x -> cleanText(x));
+        System.out.println(values.take(0));
+//        JavaPairRDD<String, String> wholeText = sc.wholeTextFiles(directory);
+//        JavaRDD<String> lines = wholeText.flatMap(line -> Arrays.asList(line._2().replaceAll("[^a-zA-z0-9]+", " ").toLowerCase().split("[ \t\n\r]")).iterator());
+//        generateSplits(cleanText(searchTerm), lines.collect().toArray(new String[0]), similarity);
+//        printResults();
     }
 
     public String cleanText(String line) {
