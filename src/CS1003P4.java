@@ -2,21 +2,12 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 
 public class CS1003P4 {
-    /**
-     * output is an ArrayList of Strings where all matched phrases will be stored. At the end of this
-     * program a simple for loop cycles through this list and prints out all the correct responses.
-     */
-    private ArrayList<String> output = new ArrayList<>();
-
     /**
      * This main method is the starting point for this program. It begins by looking at the command line
      * arguments. Firstly these arguments are checked to see if a total of three exist. An error is produced
@@ -57,22 +48,18 @@ public class CS1003P4 {
         SparkConf conf = new SparkConf().setAppName("SparkPractical").setMaster("local[*]");
         Logger.getRootLogger().setLevel(Level.OFF);
         JavaSparkContext sc = new JavaSparkContext(conf);
-        JavaRDD<String> values = sc.wholeTextFiles(directory).values();
-        values.foreach(x -> cleanText(x));
-        System.out.println(values.take(0));
-//        JavaPairRDD<String, String> wholeText = sc.wholeTextFiles(directory);
-//        JavaRDD<String> lines = wholeText.flatMap(line -> Arrays.asList(line._2().replaceAll("[^a-zA-z0-9]+", " ").toLowerCase().split("[ \t\n\r]")).iterator());
-//        generateSplits(cleanText(searchTerm), lines.collect().toArray(new String[0]), similarity);
-//        printResults();
+        JavaPairRDD<String, String> wholeText = sc.wholeTextFiles(directory);
+        JavaPairRDD<String, String[]> newTexts = wholeText.mapValues(x -> cleanText(x).split("[ \t\n\r]"));
+        newTexts.foreach(data -> {generateSplits(cleanText(searchTerm), data._2(), similarity);});
     }
 
-    public String cleanText(String line) {
+    public static String cleanText(String line) {
         line = line.replaceAll("[^a-zA-Z0-9]+", " ");
         line = line.toLowerCase();
         return line;
     }
 
-    public void generateSplits(String search, String[] words, double similarity) {
+    public static void generateSplits(String search, String[] words, double similarity) {
         int length = search.split(" ").length;
         for (int i = 0; i < words.length - length; i++) {
             String substring = words[i];
@@ -81,12 +68,12 @@ public class CS1003P4 {
             }
             double next = calculateJaccard(createBigram(search), createBigram(substring));
             if (next >= similarity) {
-                this.output.add(substring);
+                System.out.println(substring);
             }
         }
     }
 
-    public HashSet<String> createBigram(String word) {
+    public static HashSet<String> createBigram(String word) {
         HashSet<String> bigram = new HashSet<String>();
         for (int i = 0; i < word.length() - 1; i ++) {
             String letter1 = "" + word.charAt(i);
@@ -97,7 +84,7 @@ public class CS1003P4 {
         return bigram;
     }
 
-    public double calculateJaccard(HashSet<String> set1, HashSet<String> set2) {
+    public static double calculateJaccard(HashSet<String> set1, HashSet<String> set2) {
         HashSet<String> intersection = new HashSet<>();
         HashSet<String> union = new HashSet<>();
         if (set1.size() > set2.size()) {
@@ -110,11 +97,5 @@ public class CS1003P4 {
         set1.addAll(set2);
         union.addAll(set1);
         return (double) intersection.size() / union.size();
-    }
-
-    public void printResults() {
-        for (String response : this.output) {
-            System.out.println(response);
-        }
     }
 }
