@@ -6,7 +6,9 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 
 public class CS1003P4 {
     /**
@@ -49,46 +51,37 @@ public class CS1003P4 {
         SparkConf conf = new SparkConf().setAppName("SparkPractical").setMaster("local[*]");
         Logger.getRootLogger().setLevel(Level.OFF);
         JavaSparkContext sc = new JavaSparkContext(conf);
+        HashSet<String> cleanSearch = createBigram(cleanText(searchTerm));
         JavaPairRDD<String, String> wholeText = sc.wholeTextFiles(directory);
-        JavaRDD<String[]> test = wholeText.flatMap(x -> {
-            String[] search = cleanText(searchTerm);
-            String[] words = cleanText(x._2());
-            String[] window = new String[words.length - search.length];
-            for (int i = 0; i < words.length - search.length; i++) {
-                String substring = words[i];
-                for (int j = 1; j < search.length; j++) {
-                    substring += " " + words[i + j];
+        JavaRDD<String> slidingWindow = wholeText.flatMap(x -> {
+            String[] search = cleanText(searchTerm).split(" ");
+            String[] words = cleanText(x._2()).split(" ");
+            String[] window = new String[words.length - search.length + 1];
+            for (int i = 0; i < window.length; i++) {
+                String substring = "";
+                for (int j = 0; j < search.length; j++) {
+                    if (j != search.length - 1) {
+                        substring += words[i + j] + " ";
+                    } else {
+                        substring += words[i + j];
+                    }
                 }
                 window[i] = substring;
             }
-            return window;
+            return Arrays.asList(window).iterator();
         });
-//        wholeText.mapValues(x -> cleanText(x).split(" ")).
-//                foreach(data -> {generateSplits(cleanText(searchTerm), data._2(), similarity);});
+        JavaRDD<String> finalOutput = slidingWindow.filter(data -> calculateJaccard(createBigram(data), cleanSearch) >= similarity);
+        finalOutput.foreach(y -> System.out.println(y));
     }
 
-    public static String[] cleanText(String line) {
+    public static String cleanText(String line) {
         line = line.replaceAll("[^a-zA-Z0-9]+", " ");
         line = line.toLowerCase();
-        return line.split(" ");
-    }
-
-    public static void generateSplits(String search, String[] words, double similarity) {
-        int length = search.split(" ").length;
-        for (int i = 0; i < words.length - length; i++) {
-            String substring = words[i];
-            for (int j = 1; j < length; j++) {
-                substring += " " + words[i + j];
-            }
-            double next = calculateJaccard(createBigram(search), createBigram(substring));
-            if (next >= similarity) {
-                System.out.println(substring);
-            }
-        }
+        return line;
     }
 
     public static HashSet<String> createBigram(String word) {
-        HashSet<String> bigram = new HashSet<String>();
+        HashSet<String> bigram = new HashSet<>();
         for (int i = 0; i < word.length() - 1; i ++) {
             String letter1 = "" + word.charAt(i);
             String letter2 = "" + word.charAt(i + 1);
