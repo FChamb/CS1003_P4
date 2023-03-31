@@ -2,6 +2,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -49,14 +50,27 @@ public class CS1003P4 {
         Logger.getRootLogger().setLevel(Level.OFF);
         JavaSparkContext sc = new JavaSparkContext(conf);
         JavaPairRDD<String, String> wholeText = sc.wholeTextFiles(directory);
-        JavaPairRDD<String, String[]> newTexts = wholeText.mapValues(x -> cleanText(x).split("[ \t\n\r]"));
-        newTexts.foreach(data -> {generateSplits(cleanText(searchTerm), data._2(), similarity);});
+        JavaRDD<String[]> test = wholeText.flatMap(x -> {
+            String[] search = cleanText(searchTerm);
+            String[] words = cleanText(x._2());
+            String[] window = new String[words.length - search.length];
+            for (int i = 0; i < words.length - search.length; i++) {
+                String substring = words[i];
+                for (int j = 1; j < search.length; j++) {
+                    substring += " " + words[i + j];
+                }
+                window[i] = substring;
+            }
+            return window;
+        });
+//        wholeText.mapValues(x -> cleanText(x).split(" ")).
+//                foreach(data -> {generateSplits(cleanText(searchTerm), data._2(), similarity);});
     }
 
-    public static String cleanText(String line) {
+    public static String[] cleanText(String line) {
         line = line.replaceAll("[^a-zA-Z0-9]+", " ");
         line = line.toLowerCase();
-        return line;
+        return line.split(" ");
     }
 
     public static void generateSplits(String search, String[] words, double similarity) {
