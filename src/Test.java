@@ -1,8 +1,3 @@
-import org.apache.derby.impl.store.raw.log.Scan;
-import scala.tools.nsc.Global;
-import scala.tools.nsc.ScalaDoc;
-
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -40,25 +35,7 @@ public class Test {
         testSimilarity("speled", "spelled");
         System.out.println("-------------------------------------");
         System.out.println("Loading test shell script...");
-        File file = new File("test.sh");
-        ProcessBuilder processBuilder = new ProcessBuilder();
-        processBuilder.command(file.getAbsolutePath());
-        try {
-            Process process = processBuilder.start();
-            String output = "";
-            Scanner scan = new Scanner(new InputStreamReader(process.getInputStream()));
-            while (scan.hasNext()) {
-                output += scan.nextLine() + "\n";
-            }
-            int exit = process.waitFor();
-            if (exit == 0) {
-                System.out.println("Running script...");
-                System.out.println(output);
-                System.exit(0);
-            }
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        testShellScript();
         System.out.println("-------------------------------------");
     }
 
@@ -81,5 +58,30 @@ public class Test {
             output = output.substring(0, 5);
         }
         System.out.println("Jaccard index of '" + value1 + "' & '" + value2 + "': " + output);
+    }
+
+    /**
+     * testShellScript runs test.sh and prints all output
+     */
+    public void testShellScript() {
+        File file = new File("test.sh");
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        processBuilder.command(file.getAbsolutePath());
+        try {
+            Process process = processBuilder.start();
+            String output = "";
+            Scanner scan = new Scanner(new InputStreamReader(process.getInputStream()));
+            while (scan.hasNext()) {
+                output += scan.nextLine() + "\n";
+            }
+            int exit = process.waitFor();
+            if (exit == 0) {
+                System.out.println("Running script...");
+                System.out.println(output);
+                System.exit(0);
+            }
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

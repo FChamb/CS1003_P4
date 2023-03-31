@@ -32,17 +32,18 @@ public class CS1003P4 {
             if (directory.list() == null || directory.list().length == 0) {
                 throw new FileNotFoundException("\"" + directory + "\" does not contain any files!");
             }
-            Double similarity = -1.0;
+            double similarity = -1.0;
             try {
                 similarity = Double.parseDouble(args[2]);
+                if (similarity > 1.0 || similarity < 0.0) {
+                    throw new NumberFormatException();
+                }
             } catch (NumberFormatException e) {
                 System.out.println("\"" + args[2] + "\" is not a valid similarity value!");
                 System.exit(1);
             }
             CS1003P4 project = new CS1003P4();
-            if (similarity != -1.0) {
-                project.search(directory.getPath(), args[1], similarity);
-            }
+            project.search(directory.getPath(), args[1], similarity);
         } catch (IllegalArgumentException | FileNotFoundException e) {
             System.out.println(e.getMessage());
             System.exit(1);
