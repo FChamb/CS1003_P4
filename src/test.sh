@@ -39,6 +39,27 @@ cat stdout
 
 echo "  "
 
+echo "arguments : data \"asghjkasghlasj\" 1.25"
+java --add-exports java.base/sun.nio.ch=ALL-UNNAMED CS1003P4 data "asghjkasghlasj" 1.25 > stdout 2> stderr
+LC_ALL=C sort stdout -o stdout
+cat stdout
+
+echo "  "
+
+echo "arguments : data \"new ebooks the project\" 0.75"
+java --add-exports java.base/sun.nio.ch=ALL-UNNAMED CS1003P4 data "new ebooks the project" 0.75 > stdout 2> stderr
+LC_ALL=C sort stdout -o stdout
+cat stdout
+
+echo "  "
+
+echo "arguments : data \"tHiS 'is a \\test R..u*n\" 0.75"
+java --add-exports java.base/sun.nio.ch=ALL-UNNAMED CS1003P4 data "tHiS 'is a \\test R..u*n" 0.75 > stdout 2> stderr
+LC_ALL=C sort stdout -o stdout
+cat stdout
+
+echo "  "
+
 echo "arguments : data \"she generally gave herself very good advice though she very seldom followed it\" 0.95"
 java --add-exports java.base/sun.nio.ch=ALL-UNNAMED CS1003P4 data "she generally gave herself very good advice though she very seldom followed it" 0.95 > stdout 2> stderr
 LC_ALL=C sort stdout -o stdout
